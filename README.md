@@ -24,6 +24,7 @@ Webstrike crawls target websites, discovers internal links, and runs a suite of 
 - 🧪 Designed for use on Kali Linux
 ---
 
+
 ## 📦 Tools Used in Webstrike
 
 | Tool         | Description                                                      |
@@ -84,7 +85,7 @@ Change the URL to your target (only test legal and safe targets).
 ========= SCAN RESULTS =========
 
 [!] XSS Vulnerabilities:
-  [-] None found
+  [+] http://target.com/page.php?query=<script>alert(1)</script>
 
 [!] SQL Injection Vulnerabilities:
   [+] http://testphp.vulnweb.com/listproducts.php?cat=3' OR '1'='1
@@ -131,7 +132,28 @@ Nmap done: 1 IP address (1 host up) scanned in 31.57 seconds
 [!] Nikto Web Server Misconfiguration Scan:
 - Nikto v2.5.0
 ---------------------------------------------------------------------------
-+ 0 host(s) tested
++ Target IP:          44.228.249.3
++ Target Hostname:    testphp.vulnweb.com
++ Target Port:        80
++ Start Time:         2025-07-01 17:47:29 (GMT)
+
++ Server: Apache/2.2.8 (Ubuntu)
++ Retrieved x-powered-by header: PHP/5.2.4-2ubuntu5.10
++ The X-Frame-Options header is not set. This could allow clickjacking attacks.
++ The X-Content-Type-Options header is not set. This could allow MIME-type sniffing.
++ OSVDB-3268: /admin/: Directory indexing found.
++ OSVDB-3092: /phpinfo.php: PHP configuration file is accessible.
++ OSVDB-3092: /test/: Default test directory found.
++ OSVDB-112004: /icons/: Directory indexing enabled.
++ Cookie PHPSESSID created without the HttpOnly flag.
++ Uncommon header 'x-powered-by' found, which can reveal tech stack info.
++ Allowed HTTP Methods: GET, HEAD, POST, OPTIONS, TRACE 
++ WebDAV is enabled on the server.
++ Scan completed at 2025-07-01 17:47:59 (30 seconds)
+---------------------------------------------------------------------------
+
++ 1 host(s) tested
+
 ```
 
 
@@ -139,18 +161,18 @@ Nmap done: 1 IP address (1 host up) scanned in 31.57 seconds
 
 ## 🧩 Module Descriptions
 
-Each scanner module is stored in the `scanners/` folder. Every file is independent, focused, and reusable across other Python-based security tools.
+Each scanner module is located in the `scanners/` folder. Below is a description of what each module scans for and what the associated vulnerability means.
 
-| Module File         | Description                                                   | Tools Used                  |
-|---------------------|---------------------------------------------------------------|-----------------------------|
-| `crawler.py`        | Crawls the target website and collects internal URLs          | `requests`, `BeautifulSoup` |
-| `xss.py`            | Detects reflected Cross-Site Scripting vulnerabilities        | `requests`, `html`          |
-| `sqli.py`           | Tests for SQL Injection using basic fuzzing and error matching| `requests`                  |
-| `csrf.py`           | Identifies POST forms missing CSRF tokens                     | `requests`, `BeautifulSoup` |
-| `portscan.py`       | Scans for open TCP ports on the target host                   | `socket`                    |
-| `misconfig.py`      | Runs Nmap and Nikto to detect server misconfigurations        | `subprocess`, `nmap`, `nikto` |
+| Module File     | What It Scans For                                       | Explanation |
+|------------------|----------------------------------------------------------|-------------|
+| `crawler.py`     | Crawls the target site and collects all internal links  | Identifies reachable pages on the same domain so other modules can scan them. It enables working of xxs, sqli and csrf modules|
+| `xss.py`         | Cross-Site Scripting (XSS)                               | XSS occurs when an attacker injects malicious JavaScript into a page, which then runs in the victim’s browser. The module injects test payloads and looks for reflected scripts in the response. |
+| `sqli.py`        | SQL Injection (SQLi)                                     | SQLi allows attackers to manipulate SQL queries by injecting special characters (`' OR '1'='1`). This module checks for database errors or suspicious responses after injecting such payloads. |
+| `csrf.py`        | Missing CSRF Token Protection                            | CSRF tricks logged-in users into submitting unwanted actions (e.g. changing a password). This module finds POST forms and flags ones that don’t include a CSRF token field. |
+| `portscan.py`    | Open TCP ports                                           | Open ports may expose unnecessary or vulnerable services. This module checks ports like 21, 22, 80, 443, 3306 using raw TCP socket connections. |
+| `misconfig.py`   | Web server misconfigurations via Nikto & Nmap           | Uses external tools to identify missing security headers, outdated software, open services, and misconfigured directories like `/admin/` or `/phpinfo.php`. |
 
-> These modules return structured results to `webstrike.py` for clean output and future reporting.
+> Each module feeds its results back to `webstrike.py`, which prints a structured summary.
 
 ---
 
